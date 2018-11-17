@@ -1,0 +1,6 @@
+{
+    "editor.smoothScrolling": true,
+    "editor.renderWhitespace": "boundary",
+    "go.autocompleteUnimportedPackages": true,
+    "editor.scrollBeyondLastLine": false
+}
