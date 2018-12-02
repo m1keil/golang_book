@@ -1,18 +1,6 @@
-package main
-
-import (
-	"fmt"
-)
+package chapter4
 
 // Write an in-place function to eliminate adjacent duplicates in a []string slice
-
-func main() {
-	s := []string{"x", "y", "y", "y", "w", "a", "a"}
-
-	s = deduplicate(s)
-	fmt.Println(s)
-
-}
 
 func deduplicate(s []string) []string {
 	removed := 0
