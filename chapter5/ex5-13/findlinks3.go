@@ -9,70 +9,100 @@ package main
 
 import (
 	"fmt"
+	"gopl.io/ch5/links"
+	"io"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
-
-	"./links"
-	"golang.org/x/net/html"
+	"path"
 )
 
-func breadthFirst(f func(string, bool) []string, worklist []string) {
+func breadthFirst(f func(string) []string, worklist []string) {
 	seen := make(map[string]bool)
-	roots := worklist
 	for len(worklist) > 0 {
 		items := worklist
 		worklist = nil
 		for _, item := range items {
 			if !seen[item] {
 				seen[item] = true
-				worklist = append(worklist, f(item, isInList(roots, item))...)
+				worklist = append(worklist, f(item)...)
 			}
 		}
 	}
 }
 
-func crawl(url string, save bool) []string {
+func crawl(url string) []string {
 	fmt.Println(url)
-	list, doc, err := links.Extract(url)
+	list, err := links.Extract(url)
 	if err != nil {
 		log.Print(err)
 	}
 
-	if save {
-		savePage(url, doc)
+	if isInList(os.Args[1:], url) {
+		savePage(url)
 	}
 
 	return list
 }
 
-func savePage(u string, page *html.Node) {
-	fmt.Println("saving:", u)
+func savePage(address string) {
+	fmt.Println("saving:", address)
 
-	dir, file := normalizePath(url)
-	fmt.Printf("dir %v file %v\n", dir, file)
-	err := os.Mkdir(dir, 0755)
-	if !os.IsExist(err) {
+	u, err := url.Parse(normalizePath(address))
+	if err != nil {
+		fmt.Println("unable to parse url")
+		return
+	}
+
+	dir := path.Join(u.Hostname(), path.Dir(u.EscapedPath()))
+	file := path.Base(u.EscapedPath())
+
+	fmt.Printf("%v %v\n", dir, file)
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
 		fmt.Println("unable to create dir", dir)
 		return
 	}
 
-	f, err := os.Create(filepath)
-	if os.IsExist(err) {
-		fmt.Println("unable to create file", filepath)
+	f, err := os.Create(path.Join(dir, file))
+	if err != nil {
+		fmt.Println("unable to create file", f.Name())
 		return
 	}
-	err = html.Render(f, page)
+
+	resp, err := http.Get(address)
 	if err != nil {
-		fmt.Println("failed to write:", filepath)
+		fmt.Println("unable to download", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(f, resp.Body)
+	if err != nil {
+		fmt.Println("failed to write:", f.Name())
+	}
+
+	if err = f.Close(); err != nil {
+		fmt.Println("failed to write:", f.Name())
 	}
 }
 
-func normalizePath(u string) (string, string) {
-	url, err := url.Parse(u)
+// normalize url path:
+// http://www.example.com/                      -> http://www.example.com/index.html
+// http://www.example.com/abc/                  -> http://www.example.com/abc/index.html
+// http://http://www.example.com/abc/index.html -> http://www.example.com/abc/index.html
+func normalizePath(address string) string {
+	if path.Ext(address) == ".html" {
+		return address
+	}
 
+	u, _ := url.Parse(address)
+	u.Path = path.Join(u.EscapedPath(), "index.html")
+	return u.String()
 }
 
+// checks whether the hostname of root exists in given list roots
 func isInList(roots []string, root string) bool {
 	u, err := url.Parse(root)
 	if err != nil {
