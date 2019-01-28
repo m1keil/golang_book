@@ -1,0 +1,1 @@
+Because Celsius type has a String() function which is called when the help message printed to screen
