@@ -1,7 +1,6 @@
 package chapter7
 
 import (
-	"fmt"
 	"golang.org/x/net/html"
 	"testing"
 )

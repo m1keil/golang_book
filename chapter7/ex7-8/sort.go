@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"golang/chapter7/ex7-8/library"
 	"os"
 	"sort"
 	"text/tabwriter"
-	"time"
 )
 
 /*
@@ -16,68 +16,14 @@ import (
   approach with repeated sorting using sort.Stable.
 */
 
-type Track struct {
-	Title  string
-	Artist string
-	Album  string
-	Year   int
-	Length time.Duration
+var tracks = []*library.Track{
+	{"Go", "Delilah", "From the Roots Up", 2012, library.Length("3m38s")},
+	{"Go", "Moby", "Moby", 1992, library.Length("3m37s")},
+	{"Go Ahead", "Alicia Keys", "As I Am", 2007, library.Length("4m36s")},
+	{"Ready 2 Go", "Martin Solveig", "Smash", 2011, library.Length("4m24s")},
 }
 
-var tracks = []*Track{
-	{"Go", "Delilah", "From the Roots Up", 2012, length("3m38s")},
-	{"Go", "Moby", "Moby", 1992, length("3m37s")},
-	{"Go Ahead", "Alicia Keys", "As I Am", 2007, length("4m36s")},
-	{"Ready 2 Go", "Martin Solveig", "Smash", 2011, length("4m24s")},
-}
-
-func length(s string) time.Duration {
-	d, err := time.ParseDuration(s)
-	if err != nil {
-		panic(s)
-	}
-	return d
-}
-
-type statefulSort struct {
-	t     []*Track
-	order []func(x, y *Track) (bool, bool)
-}
-
-func (x statefulSort) Len() int      { return len(x.t) }
-func (x statefulSort) Swap(i, j int) { x.t[i], x.t[j] = x.t[j], x.t[i] }
-func (x statefulSort) Less(i, j int) bool {
-	for _, f := range x.order {
-		swap, result := f(x.t[i], x.t[j])
-		if swap {
-			return result
-		}
-	}
-	return false
-}
-
-func sortByTitle(x, y *Track) (swap, result bool) {
-	if x.Title != y.Title {
-		return true, x.Title < y.Title
-	}
-	return
-}
-
-func sortByArtist(x, y *Track) (swap, result bool) {
-	if x.Artist != y.Artist {
-		return true, x.Artist < y.Artist
-	}
-	return
-}
-
-func sortByYear(x, y *Track) (swap, result bool) {
-	if x.Year != y.Year {
-		return true, x.Year < y.Year
-	}
-	return
-}
-
-func printTracks(tracks []*Track) {
+func printTracks(tracks []*library.Track) {
 	const format = "%v\t%v\t%v\t%v\t%v\t\n"
 	tw := new(tabwriter.Writer).Init(os.Stdout, 0, 8, 2, ' ', 0)
 	fmt.Fprintf(tw, format, "Title", "Artist", "Album", "Year", "Length")
@@ -89,10 +35,10 @@ func printTracks(tracks []*Track) {
 }
 
 func main() {
-	sort.Sort(statefulSort{tracks,
-		[]func(x, y *Track) (bool, bool){
-			sortByTitle,
-			sortByYear,
+	sort.Sort(library.StatefulSort{tracks,
+		[]func(x, y *library.Track) (bool, bool){
+			library.SortByTitle,
+			library.SortByYear,
 			// sortByArtist,
 		},
 	})
