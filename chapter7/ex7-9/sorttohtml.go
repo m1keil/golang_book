@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"sync"
 )
 
 /*
@@ -58,6 +59,7 @@ func generateHTML(tracks []*library.Track, w io.Writer) {
 }
 
 var order []func(x, y *library.Track) (bool, bool)
+var mu sync.Mutex
 
 func main() {
 	http.HandleFunc("/", handler)
@@ -65,6 +67,7 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
 	switch r.FormValue("sortBy") {
 	case "title":
 		order = append(order, library.SortByTitle)
@@ -79,6 +82,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	case "clear":
 		order = order[:0]
 	}
+	mu.Unlock()
 
 	sort.Sort(library.StatefulSort{tracks, order})
 
