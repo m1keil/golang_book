@@ -23,41 +23,47 @@ type Element struct {
 	Children []Node
 }
 
-func getElements(dec *xml.Decoder) Node {
-	fmt.Println("start func")
-	var n Node
+func (n *Element) String() string {
+	return fmt.Sprintf("%v: %v,", n.Type.Local, n.Children)
+}
 
+func nodes(decoder *xml.Decoder) (root Node) {
+	var stack []*Element
+	for {
+		tok, err := decoder.Token()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			fmt.Fprintf(os.Stderr, "xmlselect: %v\n", err)
+			os.Exit(1)
+		}
 
-	tok, err := dec.Token()
-	if err == io.EOF {
-		fmt.Println("reached end")
-		return n
-	} else if err != nil {
-		fmt.Fprintf(os.Stderr, "xmlselect: %v\n", err)
-		os.Exit(1)
+		switch tok := tok.(type) {
+		case xml.StartElement:
+			e := &Element{Type: tok.Name, Attr: tok.Attr}
+			if len(stack) != 0 {
+				parent := stack[len(stack)-1]
+				parent.Children = append(parent.Children, e)
+			}
+			stack = append(stack, e)
+
+		case xml.EndElement:
+			if len(stack) != 1 {
+				stack = stack[:len(stack)-1]
+			} else {
+				root = stack[len(stack)-1]
+			}
+
+		case xml.CharData:
+			parent := stack[len(stack)-1]
+			parent.Children = append(parent.Children, CharData(tok))
+		}
 	}
 
-	switch tok := tok.(type) {
-	case xml.StartElement:
-		fmt.Println("start element", tok.Name)
-		//n, _ = n.(Element)
-		e := Element{Type: tok.Name, Attr: tok.Attr}
-		e.Children = append(e.Children, getElements(dec))
-		fmt.Println(e)
-	case xml.EndElement:
-		fmt.Println("end element")
-		return n
-	case xml.CharData:
-		fmt.Println("txt element")
-		return CharData(tok)
-	}
-	fmt.Println("end function", n)
-	return n
-
+	return
 }
 
 func main() {
 	dec := xml.NewDecoder(os.Stdin)
-	root := getElements(dec)
-	fmt.Println(root)
+	fmt.Println(nodes(dec))
 }
