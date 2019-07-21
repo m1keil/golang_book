@@ -18,14 +18,14 @@ import (
 func main() {
 	const (
 		xmin, ymin, xmax, ymax = -2, -2, +2, +2
-		width, height          = 1024, 1024
-		concurrency            = 8
+		width, height          = 4096, 4096
+		concurrency            = 4
 	)
 
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	wg := sync.WaitGroup{}
 
-	for c := 0; c < 2; c++ {
+	for c := 0; c < concurrency; c++ {
 		offset := height / concurrency
 		start := offset * c
 
@@ -51,7 +51,7 @@ func main() {
 }
 
 func mandelbrot(z complex128) color.Color {
-	const iterations = 200
+	const iterations = 100
 	const contrast = 15
 
 	var v complex128

@@ -1,0 +1,1 @@
+On a i5-6200U CPU @ 2.30GHz CPU it maxed out at about 9.7M messages/sec.
