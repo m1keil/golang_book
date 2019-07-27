@@ -2,7 +2,7 @@
 package main
 
 import (
-	"./tempconf"
+	"golang/chapter7/ex7-6/tempconf"
 	"flag"
 	"fmt"
 )

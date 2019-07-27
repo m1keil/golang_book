@@ -11,7 +11,7 @@ import (
 	"os"
 	"time"
 
-	"./github"
+	"golang/chapter4/ex4-10/github"
 )
 
 // time constants
