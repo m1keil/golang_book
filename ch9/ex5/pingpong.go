@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sync/atomic"
 	"time"
 )
 
@@ -13,13 +14,13 @@ How many communications per second can the program sustain?
 func main() {
 	left := make(chan struct{})
 	right := make(chan struct{})
-	counter := 0
+	var counter, last uint64
 
 	// left
 	go func() {
 		for {
 			<-left
-			counter += 1
+			atomic.AddUint64(&counter, 1)
 			right <- struct{}{}
 		}
 	}()
@@ -28,7 +29,7 @@ func main() {
 	go func() {
 		for {
 			<-right
-			counter += 1
+			atomic.AddUint64(&counter, 1)
 			left <- struct{}{}
 		}
 	}()
@@ -37,11 +38,10 @@ func main() {
 	left <- struct{}{}
 
 	// print stats
-	last := 0
 	for {
-		count := counter
+		count := atomic.LoadUint64(&counter)
 		time.Sleep(time.Second * 1)
-		fmt.Println("message/sec:", counter-last)
+		fmt.Println("message/sec:", count-last)
 		last = count
 	}
 }
